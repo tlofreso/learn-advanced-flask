@@ -24,7 +24,6 @@ def test_login_required(client, path):
     response = client.post(path)
     assert response.headers["Location"] == "/auth/login"
 
-
 def test_author_required(app, client, auth):
     # change the post author to another user
     with app.app_context():
@@ -88,3 +87,14 @@ def test_delete(client, auth, app):
         db = get_db()
         post = db.execute('SELECT * FROM post WHERE id = 1').fetchone()
         assert post is None
+
+def test_view_post(client, auth):
+    response = client.get('/1/view')
+    assert b'test title' in response.data
+    assert b'by test on 2018-01-01' in response.data
+    assert b'test\nbody' in response.data
+    assert b'href="/1/update"' not in response.data
+
+    auth.login()
+    response = client.get('/1/view')
+    assert b'href="/1/update"' in response.data
